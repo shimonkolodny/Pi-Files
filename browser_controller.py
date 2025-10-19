@@ -117,10 +117,13 @@ def init_browser():
     global browser_instance, page_instance, playwright_instance
     
     if playwright_instance is None:
-        playwright_instance = sync_playwright().start()
-        browser_instance = playwright_instance.chromium.launch(headless=False)
-        page_instance = browser_instance.new_page()
-        page_instance.set_viewport_size({"width": 1280, "height": 720})
+        try:
+            playwright_instance = sync_playwright().start()
+            browser_instance = playwright_instance.chromium.launch(headless=False)
+            page_instance = browser_instance.new_page()
+            page_instance.set_viewport_size({"width": 1280, "height": 720})
+        except Exception as e:
+            raise Exception(f"Failed to initialize browser. Make sure Playwright is installed with 'playwright install chromium'. Error: {str(e)}")
     
     return page_instance
 
@@ -711,10 +714,12 @@ def chat():
             
             return jsonify({'response': response})
         except Exception as e:
-            last_error = str(e)
+            # Log the error for debugging but don't expose details to user
+            print(f"Model {model} failed: {str(e)}")
+            last_error = "API request failed"
             continue
     
-    return jsonify({'error': f'All models failed. Last error: {last_error}'})
+    return jsonify({'error': 'All configured models failed. Please check your API key and model configuration.'})
 
 def main():
     """Main entry point"""
